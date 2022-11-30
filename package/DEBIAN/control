@@ -1,0 +1,6 @@
+Package: (name)
+Version: (version)
+Architecture: (architecture)
+Maintainer: Edouard Berteloot <edouard.berteloot@gmail.com>
+Description: A service turning on a nodejs express listening to calls to call the Cachefly Api (bearer token required) and transform the data into a Prometheus format (counters and histograms). More description at https://github.com/edouardbe/cachefly-api-to-prometheus
+Depends: nodejs , npm

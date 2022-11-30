@@ -1,0 +1,24 @@
+# set your Cachefly Bearer Token  here or by environment variable. Required
+CATP_CACHEFLY_TOKEN=
+
+# set the port for the nodejs express server to listen to. Default 9145
+#CATP_NODEJS_PORT=9145
+
+# set the path for the nodejs express server to listen to. Default /metrics
+#CATP_NODEJS_PATH=/metrics
+
+# set verbose mode (0 or 1)
+CATP_VERBOSE=0
+
+# set the logs directory (default /var/log)
+#CATP_LOGS_DIR=/var/log
+#CATP_LOGS_DIR=.
+
+# set the logs file (default fastly-real-time-api-to-prometheus.log)
+#CATP_LOGS_FILE=cachefly-api-to-prometheus.log
+
+# set the directory where to write the data for prometheus. Optional. Default current execution directory
+#CATP_OUTPUT_DIR=.
+
+# set the filenmae where to write the data for prometheus. Optional. Default cachefly-api-to-prometheus.data
+#CATP_OUTPUT_FILE="cachefly-api-to-prometheus.data"

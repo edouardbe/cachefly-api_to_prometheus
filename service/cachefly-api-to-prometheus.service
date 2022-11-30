@@ -1,0 +1,10 @@
+[Unit]
+Description=Service for transformation of Cachefly Api data into Prometheus data
+Documentation=https://github.com/edouardbe/cachefly-api-to-prometheus
+
+[Service]
+Type=simple
+ExecStart=node /usr/local/lib/cachefly-api-to-prometheus/nodejs/main.js --configuration-file=/etc/cachefly-api-to-prometheus/config.txt
+
+[Install]
+WantedBy=multi-user.target
