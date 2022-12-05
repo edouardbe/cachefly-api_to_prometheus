@@ -1,5 +1,5 @@
 {
-  "name": "cachefly-api-to-prometheus",
+  "name": "cachefly_metrics_exporter",
   "version": "1.0.0",
   "description": "Call the listener to call the Cachefly API and transform the result into a Prometheus counters and histogram format",
   "author": "Edouard Berteloot",

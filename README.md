@@ -21,14 +21,14 @@ A sample configuration file is attached : sample_config.txt.
 
 ## Using Docker
 Build the image 
-    docker build -t cachefly-api-to-prometheus:1.0.0 .
+    docker build -t cachefly_metrics_exporter:1.0.0 .
 
 Copy/Paste/Modify the sample configuration file
     cp sample_config.txt config.txt
     # add the token as CATP_CACHEFLY_TOKEN=abc
 
 Run the container, detached, specify the port and link the external configuration file
-    docker container run --name cachefly-api-to-prometheus -p 9145:9145 -v /path/to/you/configuration/file/config.txt:/app/config.txt:ro cachefly-api-to-prometheus:1.0.0
+    docker container run --name cachefly_metrics_exporter -p 9145:9145 -v /path/to/you/configuration/file/config.txt:/app/config.txt:ro ccachefly_metrics_exporter:1.0.0
 
 Test
     curl http://localhost:9145/metrics
@@ -40,17 +40,17 @@ Build the Deb package
 
 Copy the .deb package on the target server
 Install the .deb package
-    sudo dpkg -i cachefly-api-to-prometheus_1.0-1_amd64.deb
+    sudo dpkg -i cachefly_metrics_exporter__1.0-1_amd64.deb
 
 Copy/Paste/Modify the sample configuration file
-    cp /etc/cachefly-api-to-prometheus/sample_config.txt /etc/cachefly-api-to-prometheus/config.txt
+    cp /etc/cachefly_metrics_exporter/sample_config.txt /etc/cachefly_metrics_exporter/config.txt
     # add the token as CATP_CACHEFLY_TOKEN=abc
 
 Start the service
-    sudo service cachefly-api-to-prometheus start
+    sudo service cachefly_metrics_exporter start
 
 Check the status
-    sudo service cachefly-api-to-prometheus status
+    sudo service cachefly_metrics_exporter status
 
 Test the service
     curl http://localhost:9145/metrics

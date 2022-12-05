@@ -15,10 +15,10 @@ CATP_VERBOSE=0
 #CATP_LOGS_DIR=.
 
 # set the logs file (default fastly-real-time-api-to-prometheus.log)
-#CATP_LOGS_FILE=cachefly-api-to-prometheus.log
+#CATP_LOGS_FILE=cachefly_metrics_exporter.log
 
 # set the directory where to write the data for prometheus. Optional. Default current execution directory
 #CATP_OUTPUT_DIR=.
 
-# set the filenmae where to write the data for prometheus. Optional. Default cachefly-api-to-prometheus.data
-#CATP_OUTPUT_FILE="cachefly-api-to-prometheus.data"
+# set the filenmae where to write the data for prometheus. Optional. Default cachefly_metrics_exporter.data
+#CATP_OUTPUT_FILE="cachefly_metrics_exporter.data"

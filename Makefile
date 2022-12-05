@@ -1,5 +1,5 @@
 
-name=cachefly-api-to-prometheus
+name=cachefly_metrics_exporter
 version=1.0
 revision=1
 architecture=amd64
@@ -21,7 +21,7 @@ create_deb_package:
 	mkdir -p $(etc)
 	cp ./$(sample_configuration_file) $(etc)/
 	mkdir -p $(system)
-	cp ./service/cachefly-api-to-prometheus.service $(service)
+	cp ./service/cachefly_metrics_exporter.service $(service)
 	mkdir -p $(package)/DEBIAN
 	cp -r ./package/DEBIAN/* $(package)/DEBIAN/
 	sed -i -e "s#(name)#$(name)#g" $(package)/DEBIAN/control

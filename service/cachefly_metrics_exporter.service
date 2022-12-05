@@ -1,0 +1,10 @@
+[Unit]
+Description=Service for transformation of Cachefly Api data into Prometheus data
+Documentation=https://github.com/mubi/cachefly_metrics_exporter
+
+[Service]
+Type=simple
+ExecStart=node /usr/local/lib/cachefly_metrics_exporter/nodejs/main.js --configuration-file=/etc/cachefly_metrics_exporter/config.txt
+
+[Install]
+WantedBy=multi-user.target
