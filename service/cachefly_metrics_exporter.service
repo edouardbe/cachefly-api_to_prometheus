@@ -4,7 +4,7 @@ Documentation=https://github.com/mubi/cachefly_metrics_exporter
 
 [Service]
 Type=simple
-ExecStart=node /usr/local/lib/cachefly_metrics_exporter/nodejs/main.js --configuration-file=/etc/cachefly_metrics_exporter/config.txt
+ExecStart=node /usr/local/lib/cachefly_metrics_exporter/nodejs/main.js --configuration-file=/etc/cachefly_metrics_exporter/cachefly-config.txt
 
 [Install]
 WantedBy=multi-user.target
