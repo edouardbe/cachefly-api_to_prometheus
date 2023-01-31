@@ -21,6 +21,7 @@ const definitions = [
     { name: 'cachefly-token', type: String, obfuscate: true, required: true, desc:"the Cachefly bearer token to authenticate to Cachefly"},
     { name: 'ignore-metrics', type: String, desc:"semi-column separated values of metrics to ignore"},
     { name: 'endpoint-chr', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.5/reports/chr", desc: "the API endpoint to call for Cache Hit Ratio"},
+    { name: 'endpoint-pop', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.5/reports/pop", desc: "the API endpoint to call for Statistics aggregated by CacheFly geographical POP"},
     { name: 'metrics-prepend', type: String, defaultIfMissing: "cachefly_", desc: "add a header to the metric names for prometheus"}
   ]
 
@@ -164,72 +165,110 @@ function callCacheflyApi(in_ouput_dir, in_output_file, in_callback) {
         // retrieve the previous accumulated values
         var previousData = JSON.parse(fs.readFileSync(`${in_ouput_dir}/${in_output_file}`));
 
-        var from = previousData.lastCall || new Date(new Date() - 2 * 60000).toISOString() //2022-11-17T00:00:00.000Z
-        var to = new Date(new Date() - 2 * 60000).toISOString(); //2022-11-17T00:00:00.000Z
-
+        var chr_from = previousData.lastCall || new Date(new Date() - 2 * 60000).toISOString() //2022-11-17T00:00:00.000Z
+        var chr_to = new Date(new Date() - 2 * 60000).toISOString(); //2022-11-17T00:00:00.000Z
+        
         // reset the counters at midnight
-        if (from[9] != to[9]) {
+        if (chr_from[9] != chr_to[9]) {
             previousData.chr = {}
+            previousData.pop = {}
         }
-
+        
+        // FOR THE CHR - START
         var to_epoch = new Date(new Date() - 2 * 60000).getTime()
-        var interval = "1m"
-        var offset = 0
-        var limit = 10000
+        var chr_interval = "1m"
+        var chr_offset = 0
+        var chr_limit = 10000
 
-        var config = {
+        var chr_config = {
             method: 'get',
-            url: `${parsedArguments.get("endpoint-chr")}?from=${from}&to=${to}&interval=${interval}&groupBy=pop&offset=${offset}&limit=${limit}`,
-            headers: {
+            url: `${parsedArguments.get("endpoint-chr")}?from=${chr_from}&to=${chr_to}&interval=${chr_interval}&groupBy=pop&offset=${chr_offset}&limit=${chr_limit}`,
+            headers: { 
+                'Authorization': `Bearer ${parsedArguments.get("cachefly-token")}`
+            }
+        }
+        // FOR THE CHR - END
+
+        // FOR THE POP - START
+        // POP endpoint is a counter per day. no hour interval. 
+        var pop_from = chr_from.substring(0, 10)
+        var pop_config = {
+            method: 'get',
+            url: `${parsedArguments.get("endpoint-pop")}?from=${pop_from}`,
+            headers: { 
                 'Authorization': `Bearer ${parsedArguments.get("cachefly-token")}`
             }
         }
 
-        axios(config)
-            .then(function (response) {
-                var chr = response.data.data.reduce((acc, cur) => {
-                    var p = acc[cur.pop] || { hit: 0, miss: 0 };
-                    p.hit += cur.hit;
-                    p.miss += cur.miss;
-                    acc[cur.pop] = p;
-                    return acc;
-                }, previousData.chr || {});
+        Promise.all( [axios(chr_config), axios(pop_config)])
+        .then(function (responses) {
+            var chr = responses[0].data.data.reduce((acc,cur) => { 
+                var p = acc[cur.pop] || {hit : 0, miss : 0};
+                p.hit += cur.hit;
+                p.miss += cur.miss;
+                acc[cur.pop] = p;
+                return acc;
+            },previousData.chr || {});
 
-                var newData = {
-                    lastCall: to,
-                    chr: chr
-                }
-                // save the new accumulated values
-                fs.writeFileSync(`${in_ouput_dir}/${in_output_file}`, JSON.stringify(newData))
+            // start with an empty accumulator because the API is a counter from midnight
+            // aggregate all the services
+            var pop = responses[1].data.data.reduce((acc,cur) => { 
+                var p = acc[cur.pop] || {}
+                Object.keys(cur).filter(k => k.startsWith("hits") || k.startsWith("gigs")).forEach( k => {
+                    p[k] = (p[k] || 0) + cur[k]
+                })
+                acc[cur.pop] = p;
+                return acc;
+            }, {});
+
+            var newData = {
+                lastCall : chr_to,
+                chr : chr,
+                pop : pop
+            }
+            // save the new accumulated values
+            fs.writeFileSync(`${in_ouput_dir}/${in_output_file}`, JSON.stringify(newData))
 
                 // generate the prometheus data
                 var data = []
 
-                // print the pops and their details for dependency in grafana
-                data.push(`# HELP ${parsedArguments.get("metrics-prepend")}pops ${parsedArguments.get("metrics-prepend")}pops`)
-                data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}pops gauge`)
-                Object.entries(POPS).forEach(([pop, info]) => data.push(`${parsedArguments.get("metrics-prepend")}pops{pop="${pop}",continent="${isoContinent(info.continent)}",country="${info.country}",city="${info.city}"} 1`))
-
-                // print the last timestamp for the next iteration
-                data.push(`# HELP last_timestamp ${parsedArguments.get("metrics-prepend")}last_timestamp`)
-                data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}last_timestamp counter`)
-                data.push(`${parsedArguments.get("metrics-prepend")}last_timestamp ${to_epoch}`);
-
-                data.push(`# HELP ${parsedArguments.get("metrics-prepend")}miss ${parsedArguments.get("metrics-prepend")}miss`)
-                data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}miss counter`)
-                Object.entries(chr).forEach(([pop, value]) => data.push(`${parsedArguments.get("metrics-prepend")}miss{pop="${pop}", continent="${isoContinent(POPS[pop] ? POPS[pop].continent : "unknown")}", country="${POPS[pop] ? POPS[pop].country : "unknown"}", city="${POPS[pop] ? POPS[pop].city : "unknown"}"} ${value.miss}`))
-
-                data.push(`# HELP ${parsedArguments.get("metrics-prepend")}hit ${parsedArguments.get("metrics-prepend")}hit`)
-                data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}hit counter`)
-                Object.entries(chr).forEach(([pop, value]) => data.push(`${parsedArguments.get("metrics-prepend")}hit{pop="${pop}", continent="${isoContinent(POPS[pop] ? POPS[pop].continent : "unknown")}", country="${POPS[pop] ? POPS[pop].country : "unknown"}", city="${POPS[pop] ? POPS[pop].city : "unknown"}"} ${value.hit}`))
-                data.push(null)
-                in_callback(data.join("\n"), null)
-
+            // print the pops and their details for dependency in grafana
+            data.push(`# HELP ${parsedArguments.get("metrics-prepend")}pops ${parsedArguments.get("metrics-prepend")}pops`)
+            data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}pops gauge`)
+            Object.entries(POPS).forEach( ([pop,info]) => data.push(`${parsedArguments.get("metrics-prepend")}pops{pop="${pop}",continent="${isoContinent(info.continent)}",country="${info.country}",city="${info.city}"} 1`) )
+            
+            // print the last timestamp for the next iteration
+            data.push(`# HELP last_timestamp ${parsedArguments.get("metrics-prepend")}last_timestamp`)
+            data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}last_timestamp counter`)
+            data.push(`${parsedArguments.get("metrics-prepend")}last_timestamp ${to_epoch}`);
+        
+            // CHR MISS counter
+            data.push(`# HELP ${parsedArguments.get("metrics-prepend")}miss ${parsedArguments.get("metrics-prepend")}miss`)
+            data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}miss counter`)
+            Object.entries(chr).forEach( ([pop,value]) => data.push(`${parsedArguments.get("metrics-prepend")}miss{pop="${pop}", continent="${isoContinent(POPS[pop] ? POPS[pop].continent : "unknown")}", country="${POPS[pop] ? POPS[pop].country : "unknown"}", city="${POPS[pop] ? POPS[pop].city : "unknown"}"} ${value.miss}`) )
+            
+            // CHR HIT counter
+            data.push(`# HELP ${parsedArguments.get("metrics-prepend")}hit ${parsedArguments.get("metrics-prepend")}hit`)
+            data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}hit counter`)
+            Object.entries(chr).forEach( ([pop,value]) => data.push(`${parsedArguments.get("metrics-prepend")}hit{pop="${pop}", continent="${isoContinent(POPS[pop] ? POPS[pop].continent : "unknown")}", country="${POPS[pop] ? POPS[pop].country : "unknown"}", city="${POPS[pop] ? POPS[pop].city : "unknown"}"} ${value.hit}`) )
+            
+            // get the keys forthe pop metrics (hitsxxx, gigsxxx)
+            var pop_metric_keys = Object.keys(Object.values(newData.pop)[0] || {})
+            pop_metric_keys.forEach(k => {
+                data.push(`# HELP ${parsedArguments.get("metrics-prepend")}${k} ${parsedArguments.get("metrics-prepend")}${k}`)
+                data.push(`# TYPE ${parsedArguments.get("metrics-prepend")}${k} counter`)
+                Object.entries(pop).forEach( ([pop,value]) => data.push(`${parsedArguments.get("metrics-prepend")}${k}{pop="${pop}", continent="${isoContinent(POPS[pop] ? POPS[pop].continent : "unknown")}", country="${POPS[pop] ? POPS[pop].country : "unknown"}", city="${POPS[pop] ? POPS[pop].city : "unknown"}"} ${value[k]}`) )
+                
             })
-            .catch(function (error) {
-                verbose(error)
-                in_callback(null, error)
-            });
+            
+            data.push(null)
+            in_callback(data.join("\n"), null)
+            
+        })
+        .catch(function (error) {
+            verbose(error)
+            in_callback(null, error)
+        });
     })
 };
 
