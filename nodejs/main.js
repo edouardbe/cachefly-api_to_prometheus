@@ -20,7 +20,7 @@ const definitions = [
     { name: 'nodejs-path', type: String, defaultIfMissing: "/metrics", required: true,desc:"the path to listen to"},
     { name: 'cachefly-token', type: String, obfuscate: true, required: true, desc:"the Cachefly bearer token to authenticate to Cachefly"},
     { name: 'ignore-metrics', type: String, desc:"semi-column separated values of metrics to ignore"},
-    { name: 'endpoint-chr', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.4/reports/chr", desc: "the API endpoint to call for Cache Hit Ratio"},
+    { name: 'endpoint-chr', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.5/reports/chr", desc: "the API endpoint to call for Cache Hit Ratio"},
     { name: 'metrics-prepend', type: String, defaultIfMissing: "cachefly_", desc: "add a header to the metric names for prometheus"}
   ]
 
