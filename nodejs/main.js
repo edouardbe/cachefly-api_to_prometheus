@@ -12,17 +12,17 @@ const definitions = [
     { name: 'verbose', alias: 'v', type: Boolean, defaultIfMissing: false, defaultIfPresent: true, desc: "activate the verbose mode" },
     { name: 'bypass-initial-test', type: Boolean, defaultIfMissing: false, defaultIfPresent: true, desc: "used to bypass the initial test" },
     { name: 'configuration-file', type: String, desc: "location of the configuration file to read more variables" },
-    { name: 'output-dir', type: String, defaultIfMissing: os.tmpdir(), desc: "the output directory where temporary data will be stored" },
-    { name: 'output-file', type: String, defaultIfMissing: "cachefly_metrics_exporter.data", desc: "the output file where temporary data will be stored" },
-    { name: 'logs-dir', type: String, defaultIfMissing: "/var/log", dirCreateIfMissing: true, desc: "the directory to write the logs" },
-    { name: 'logs-file', type: String, defaultIfMissing: "cachefly_metrics_exporter.log", desc: "the file to write the logs" },
-    { name: 'nodejs-port', type: 'integer', defaultIfMissing: 9145, required: true, desc: "the port to listen to" },
-    { name: 'nodejs-path', type: String, defaultIfMissing: "/metrics", required: true, desc: "the path to listen to" },
-    { name: 'cachefly-token', type: String, obfuscate: true, required: true, desc: "the Cachefly bearer token to authenticate to Cachefly" },
-    { name: 'ignore-metrics', type: String, desc: "semi-column separated values of metrics to ignore" },
-    { name: 'endpoint-chr', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.4/reports/chr", desc: "the API endpoint to call for Cache Hit Ratio" },
-    { name: 'metrics-prepend', type: String, defaultIfMissing: "cachefly_", desc: "add a header to the metric names for prometheus" }
-]
+    { name: 'output-dir', type: String, defaultIfMissing: os.tmpdir(), desc: "the output directory where temporary data will be stored"  },
+    { name: 'output-file', type: String, defaultIfMissing: "cachefly_metrics_exporter.data" , desc: "the output file where temporary data will be stored"  },
+    { name: 'logs-dir', type: String, defaultIfMissing: "/var/log", dirCreateIfMissing: true, desc:"the directory to write the logs"},
+    { name: 'logs-file', type: String, defaultIfMissing: "cachefly_metrics_exporter.log" , desc:"the file to write the logs" },
+    { name: 'nodejs-port', type: 'integer', defaultIfMissing: 9145, required: true, desc:"the port to listen to" },
+    { name: 'nodejs-path', type: String, defaultIfMissing: "/metrics", required: true,desc:"the path to listen to"},
+    { name: 'cachefly-token', type: String, obfuscate: true, required: true, desc:"the Cachefly bearer token to authenticate to Cachefly"},
+    { name: 'ignore-metrics', type: String, desc:"semi-column separated values of metrics to ignore"},
+    { name: 'endpoint-chr', type: String, defaultIfMissing: "https://api.cachefly.com/api/2.5/reports/chr", desc: "the API endpoint to call for Cache Hit Ratio"},
+    { name: 'metrics-prepend', type: String, defaultIfMissing: "cachefly_", desc: "add a header to the metric names for prometheus"}
+  ]
 
 const options = {
     envVarPrefix: "CATP_",
