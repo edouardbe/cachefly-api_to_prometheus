@@ -173,7 +173,6 @@ function callCacheflyApi(in_ouput_dir, in_output_file, in_callback) {
         // reset the counters at midnight
         if (chr_from[9] != chr_to[9]) {
             previousData.chr = {}
-            previousData.pop = {}
         }
         
         // FOR THE CHR - START
@@ -192,8 +191,9 @@ function callCacheflyApi(in_ouput_dir, in_output_file, in_callback) {
         // FOR THE CHR - END
 
         // FOR THE POP - START
-        // POP endpoint is a counter per day. no hour interval. 
-        var pop_from = chr_from.substring(0, 10)
+        // POP endpoint is a counter per day. no hour interval, based on PST timezone.
+        var pstDate = new Date().toLocaleString("fr-FR", { timeZone: "America/Los_Angeles"}) 
+        var pop_from = pstDate.replace(/(\d{2})\/(\d{2})\/(\d{4}),.*/, "$3-$2-$1")
         var pop_config = {
             method: 'get',
             url: `${parsedArguments.get("endpoint-pop")}?from=${pop_from}`,
